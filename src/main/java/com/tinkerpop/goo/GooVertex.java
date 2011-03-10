@@ -1,70 +1,100 @@
 package com.tinkerpop.goo;
 
 
-import com.basho.riak.client.RiakObject;
 import com.tinkerpop.blueprints.pgm.Edge;
 import com.tinkerpop.blueprints.pgm.Vertex;
 import com.tinkerpop.blueprints.pgm.impls.StringFactory;
 import com.tinkerpop.goo.util.GooEdgeSequence;
+import com.tinkerpop.goo.util.GooIdToEdgeSequence;
+import sun.tools.tree.ThisExpression;
 
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author Marko A. Rodriguez (http://markorodriguez.com)
  */
 public class GooVertex extends GooElement implements Vertex {
 
-    Iterable<Edge> outEdges;
-    Iterable<Edge> inEdges;
+    protected transient Set<Edge> outEdges;
+    protected transient Set<Edge> inEdges;
 
-    public GooVertex(final GooGraph graph, final RiakObject rawVertex) {
-        super(graph, rawVertex);
+    protected Set<Long> outEdgesById = new HashSet<Long>();
+    protected Set<Long> inEdgesById = new HashSet<Long>();
+
+    public GooVertex(final GooGraph graph, final Long id) {
+        super(graph, id);
     }
 
-    public Iterable<Edge> getInEdges() {
-        try {
-            if (null == inEdges) {
-                inEdges = new GooEdgeSequence(this.graph, this.rawElement.walk(GooTokens.E, GooTokens.IN_E, true).run().getSteps().get(0), null);
-            }
-            return inEdges;
-        } catch (Exception e) {
-            throw new RuntimeException(e.getMessage(), e);
+    protected void addOutEdges(final Edge edge) {
+        this.outEdgesById.add((Long) edge.getId());
+        if (null != this.outEdges) {
+            this.outEdges.add(edge);
+        }
+    }
+
+    protected void addInEdges(Edge edge) {
+        this.inEdgesById.add((Long) edge.getId());
+        if (null != this.inEdges) {
+            this.inEdges.add(edge);
+        }
+    }
+
+    protected void removeOutEdges(final Edge edge) {
+        this.outEdgesById.remove((Long) edge.getId());
+        if (null != this.outEdges) {
+            this.outEdges.remove(edge);
+        }
+    }
+
+    protected void removeInEdges(Edge edge) {
+        this.inEdgesById.remove((Long) edge.getId());
+        if (null != this.inEdges) {
+            this.inEdges.remove(edge);
         }
     }
 
     public Iterable<Edge> getOutEdges() {
-        try {
-            if (null == outEdges) {
-                outEdges = new GooEdgeSequence(this.graph, this.rawElement.walk(GooTokens.E, GooTokens.OUT_E, true).run().getSteps().get(0), null);
-            }
-            return outEdges;
-        } catch (Exception e) {
-            throw new RuntimeException(e.getMessage(), e);
+        if (null == this.outEdges) {
+            this.outEdges = new HashSet<Edge>();
+            return new GooIdToEdgeSequence(this.graph, outEdgesById.iterator(), this.outEdges);
+        } else
+            return this.outEdges;
+    }
+
+    public Iterable<Edge> getInEdges() {
+        if (null == this.inEdges) {
+            this.inEdges = new HashSet<Edge>();
+            return new GooIdToEdgeSequence(this.graph, inEdgesById.iterator(), this.inEdges);
+        } else
+            return this.inEdges;
+    }
+
+    public Iterable<Edge> getOutEdges(final String label) {
+        if (null == this.outEdges) {
+            this.outEdges = new HashSet<Edge>();
+            return new GooEdgeSequence(new GooIdToEdgeSequence(this.graph, this.outEdgesById.iterator(), this.outEdges).iterator(), label);
+        } else {
+            return new GooEdgeSequence(outEdges.iterator(), label);
         }
     }
 
     public Iterable<Edge> getInEdges(final String label) {
-        try {
-            return new GooEdgeSequence(this.graph, this.rawElement.walk(GooTokens.E, GooTokens.IN_E, true).run().getSteps().get(0), label);
-        } catch (Exception e) {
-            throw new RuntimeException(e.getMessage(), e);
+        if (null == this.inEdges) {
+            this.inEdges = new HashSet<Edge>();
+            return new GooEdgeSequence(new GooIdToEdgeSequence(this.graph, this.inEdgesById.iterator(), this.inEdges).iterator(), label);
+        } else {
+            return new GooEdgeSequence(inEdges.iterator(), label);
         }
-    }
-
-    public Iterable<Edge> getOutEdges(final String label) {
-        try {
-            return new GooEdgeSequence(this.graph, this.rawElement.walk(GooTokens.E, GooTokens.OUT_E, true).run().getSteps().get(0), label);
-        } catch (Exception e) {
-            throw new RuntimeException(e.getMessage(), e);
-        }
-    }
-
-    protected RiakObject getRawVertex() {
-        return this.rawElement;
     }
 
     public String toString() {
         return StringFactory.vertexString(this);
     }
+
+    public boolean equals(final Object object) {
+        return object instanceof GooVertex && ((GooVertex) object).getId().equals(this.getId());
+    }
+
 
 }

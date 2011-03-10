@@ -5,11 +5,7 @@ package com.tinkerpop.goo;
  */
 public class GooTokens {
 
-    public static final String LABEL = "label";
-    public static final String V = "V";
-    public static final String E = "E";
-    public static final String IN_V = "inV";
-    public static final String OUT_V = "outV";
-    public static final String IN_E = "inE";
-    public static final String OUT_E = "outE";
+    public static final String GOO = "goo";
+    public static final String VERTICES = "vertices";
+    public static final String EDGES = "edges";
 }

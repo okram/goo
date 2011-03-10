@@ -16,16 +16,17 @@ public class GooGraphTest extends GraphTest {
 
     public GooGraphTest() {
         this.allowsDuplicateEdges = true;
-        this.allowsSelfLoops = false;
+        this.allowsSelfLoops = true;
         this.isPersistent = true;
         this.isRDFModel = false;
         this.supportsVertexIteration = true;
         this.supportsEdgeIteration = true;
         this.supportsVertexIndex = false;
         this.supportsEdgeIndex = false;
-        this.ignoresSuppliedIds = false;
+        this.ignoresSuppliedIds = true;
         this.supportsTransactions = false;
     }
+
 
     public void testGooBenchmarkTestSuite() throws Exception {
         this.stopWatch();
@@ -67,13 +68,13 @@ public class GooGraphTest extends GraphTest {
         this.stopWatch();
         doTestSuite(new AutomaticIndexTestSuite(this));
         printTestPerformance("AutomaticIndexTestSuite", this.stopWatch());
-    }
+    }*/
 
     public void testTransactionalGraphTestSuite() throws Exception {
         this.stopWatch();
         doTestSuite(new TransactionalGraphTestSuite(this));
         printTestPerformance("TransactionalGraphTestSuite", this.stopWatch());
-    }*/
+    }
 
     public void testGraphMLReaderTestSuite() throws Exception {
         this.stopWatch();
@@ -81,20 +82,37 @@ public class GooGraphTest extends GraphTest {
         printTestPerformance("GraphMLReaderTestSuite", this.stopWatch());
     }
 
-    public Graph getGraphInstance() {
-        return new GooGraph("http://localhost:8098/riak");
+       public Graph getGraphInstance() {
+        String directory = System.getProperty("gooDirectory");
+        if (directory == null)
+            directory = this.getWorkingDirectory();
+        return new GooGraph(directory);
     }
 
     public void doTestSuite(final TestSuite testSuite) throws Exception {
-        this.getGraphInstance().clear();
-        for (Method method : testSuite.getClass().getDeclaredMethods()) {
-            if (method.getName().startsWith("test")) {
-                System.out.println("Testing " + method.getName() + "...");
-                method.invoke(testSuite);
-                this.getGraphInstance().clear();
-
+        String doTest = System.getProperty("testGoo");
+        if (doTest == null || doTest.equals("true")) {
+            String directory = System.getProperty("gooDirectory");
+            if (directory == null)
+                directory = this.getWorkingDirectory();
+            deleteDirectory(new File(directory));
+            for (Method method : testSuite.getClass().getDeclaredMethods()) {
+                if (method.getName().startsWith("test")) {
+                    System.out.println("Testing " + method.getName() + "...");
+                    method.invoke(testSuite);
+                    deleteDirectory(new File(directory));
+                }
             }
         }
     }
+
+    private String getWorkingDirectory() {
+        String directory = System.getProperty("gooDirectory");
+        if (directory == null) {
+            directory = "/tmp/blueprints_test";
+        }
+        return directory;
+    }
+
 
 }

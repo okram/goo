@@ -26,10 +26,10 @@ public class GooBenchmarkTestSuite extends TestSuite {
         double totalTime = 0.0d;
         Graph graph = graphTest.getGraphInstance();
         GraphMLReader.inputGraph(graph, GraphMLReader.class.getResourceAsStream("graph-example-2.xml"));
-        //graph.shutdown();
+        graph.shutdown();
 
         for (int i = 0; i < TOTAL_RUNS; i++) {
-            //graph = graphTest.getGraphInstance();
+            graph = graphTest.getGraphInstance();
             this.stopWatch();
             int counter = 0;
             for (final Vertex vertex : graph.getVertices()) {
