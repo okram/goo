@@ -2,7 +2,6 @@ package com.tinkerpop.goo;
 
 import com.tinkerpop.blueprints.pgm.*;
 import com.tinkerpop.blueprints.pgm.impls.GraphTest;
-import com.tinkerpop.blueprints.pgm.impls.neo4j.Neo4jGraph;
 import com.tinkerpop.blueprints.pgm.util.graphml.GraphMLReaderTestSuite;
 
 import java.io.File;
@@ -21,18 +20,18 @@ public class GooGraphTest extends GraphTest {
         this.isRDFModel = false;
         this.supportsVertexIteration = true;
         this.supportsEdgeIteration = true;
-        this.supportsVertexIndex = false;
-        this.supportsEdgeIndex = false;
+        this.supportsVertexIndex = true;
+        this.supportsEdgeIndex = true;
         this.ignoresSuppliedIds = true;
-        this.supportsTransactions = false;
+        this.supportsTransactions = true;
     }
 
 
-    public void testGooBenchmarkTestSuite() throws Exception {
+    /*public void testGooBenchmarkTestSuite() throws Exception {
         this.stopWatch();
         doTestSuite(new GooBenchmarkTestSuite(this));
         printTestPerformance("GooBenchmarkTestSuite", this.stopWatch());
-    }
+    }*/
 
     public void testVertexTestSuite() throws Exception {
         this.stopWatch();
@@ -52,7 +51,7 @@ public class GooGraphTest extends GraphTest {
         printTestPerformance("GraphTestSuite", this.stopWatch());
     }
 
-    /*public void testIndexableGraphTestSuite() throws Exception {
+    public void testIndexableGraphTestSuite() throws Exception {
         this.stopWatch();
         doTestSuite(new IndexableGraphTestSuite(this));
         printTestPerformance("IndexableGraphTestSuite", this.stopWatch());
@@ -68,13 +67,13 @@ public class GooGraphTest extends GraphTest {
         this.stopWatch();
         doTestSuite(new AutomaticIndexTestSuite(this));
         printTestPerformance("AutomaticIndexTestSuite", this.stopWatch());
-    }*/
+    }
 
-    public void testTransactionalGraphTestSuite() throws Exception {
+    /*public void testTransactionalGraphTestSuite() throws Exception {
         this.stopWatch();
         doTestSuite(new TransactionalGraphTestSuite(this));
         printTestPerformance("TransactionalGraphTestSuite", this.stopWatch());
-    }
+    }*/
 
     public void testGraphMLReaderTestSuite() throws Exception {
         this.stopWatch();
@@ -82,7 +81,7 @@ public class GooGraphTest extends GraphTest {
         printTestPerformance("GraphMLReaderTestSuite", this.stopWatch());
     }
 
-       public Graph getGraphInstance() {
+    public Graph getGraphInstance() {
         String directory = System.getProperty("gooDirectory");
         if (directory == null)
             directory = this.getWorkingDirectory();

@@ -1,5 +1,6 @@
 package com.tinkerpop.goo;
 
+import com.tinkerpop.blueprints.pgm.AutomaticIndex;
 import com.tinkerpop.blueprints.pgm.Edge;
 import com.tinkerpop.blueprints.pgm.Vertex;
 import com.tinkerpop.blueprints.pgm.impls.StringFactory;
@@ -16,8 +17,11 @@ public class GooEdge extends GooElement implements Edge {
     protected GooEdge(final GooGraph graph, final Long id, final Vertex outVertex, final Vertex inVertex, final String label) {
         super(graph, id);
         this.label = label;
-        this.outVertexId = (Long)outVertex.getId();
-        this.inVertexId = (Long)inVertex.getId();
+        this.outVertexId = (Long) outVertex.getId();
+        this.inVertexId = (Long) inVertex.getId();
+        for (AutomaticIndex index : this.graph.getAutoIndices()) {
+            ((GooAutomaticIndex) index).autoUpdate(AutomaticIndex.LABEL, this.label, null, this);
+        }
     }
 
     public String getLabel() {

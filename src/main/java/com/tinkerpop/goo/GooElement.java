@@ -1,13 +1,10 @@
 package com.tinkerpop.goo;
 
 
+import com.tinkerpop.blueprints.pgm.AutomaticIndex;
 import com.tinkerpop.blueprints.pgm.Element;
 import com.tinkerpop.blueprints.pgm.TransactionalGraph;
-import jdbm.RecordManager;
-import jdbm.RecordManagerFactory;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
@@ -37,15 +34,23 @@ public abstract class GooElement implements Element, Serializable {
     }
 
     public Object removeProperty(final String key) {
-        Object value = this.properties.remove(key);
-        this.graph.updateStore(this);
+        Object oldValue = this.properties.remove(key);
+        if (null != oldValue) {
+            for (AutomaticIndex<? extends Element> index : this.graph.getAutoIndices()) {
+                ((GooAutomaticIndex) index).autoRemove(key, oldValue, this);
+            }
+        }
+        this.graph.updateElementStores(this);
         this.graph.autoStopTransaction(TransactionalGraph.Conclusion.SUCCESS);
-        return value;
+        return oldValue;
     }
 
     public void setProperty(final String key, final Object value) {
-        this.properties.put(key, value);
-        this.graph.updateStore(this);
+        Object oldValue = this.properties.put(key, value);
+        for (AutomaticIndex<? extends Element> index : this.graph.getAutoIndices()) {
+            ((GooAutomaticIndex) index).autoUpdate(key, value, oldValue, this);
+        }
+        this.graph.updateElementStores(this);
         this.graph.autoStopTransaction(TransactionalGraph.Conclusion.SUCCESS);
     }
 

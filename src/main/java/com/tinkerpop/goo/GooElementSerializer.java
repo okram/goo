@@ -19,13 +19,13 @@ public class GooElementSerializer<T extends Element> implements Serializer<T> {
         this.graph = graph;
     }
 
-    public T deserialize(SerializerInput in) throws IOException {
+    public T deserialize(final SerializerInput in) throws IOException {
         T t = (T) DefaultSerializer.INSTANCE.deserialize(in);
         ((GooElement) t).graph = this.graph;
         return t;
     }
 
-    public void serialize(SerializerOutput out, T t) throws IOException {
+    public void serialize(final SerializerOutput out, T t) throws IOException {
         DefaultSerializer.INSTANCE.serialize(out, t);
     }
 }

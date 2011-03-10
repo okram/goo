@@ -4,7 +4,6 @@ import com.tinkerpop.blueprints.pgm.Edge;
 import com.tinkerpop.goo.GooGraph;
 
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -14,12 +13,12 @@ public class GooIdToEdgeSequence implements Iterable<Edge>, Iterator<Edge> {
 
     private final GooGraph graph;
     private final Iterator<Long> edgeIds;
-    private final Set<Edge> edges;
+    private final Set<Edge> edgeCache;
 
-    public GooIdToEdgeSequence(final GooGraph graph, final Iterator<Long> edgeIds, final Set<Edge> edges) {
+    public GooIdToEdgeSequence(final GooGraph graph, final Iterator<Long> edgeIds, final Set<Edge> edgeCache) {
         this.graph = graph;
         this.edgeIds = edgeIds;
-        this.edges = edges;
+        this.edgeCache = edgeCache;
     }
 
     public Iterator<Edge> iterator() {
@@ -36,8 +35,8 @@ public class GooIdToEdgeSequence implements Iterable<Edge>, Iterator<Edge> {
 
     public Edge next() {
         final Edge edge = this.graph.getEdge(this.edgeIds.next());
-        if (null != edges) {
-            this.edges.add(edge);
+        if (null != edgeCache) {
+            this.edgeCache.add(edge);
         }
         return edge;
     }

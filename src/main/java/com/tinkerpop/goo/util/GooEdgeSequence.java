@@ -18,7 +18,6 @@ public class GooEdgeSequence implements Iterable<Edge>, Iterator<Edge> {
         this.label = label;
     }
 
-
     public Iterator<Edge> iterator() {
         return this;
     }

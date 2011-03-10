@@ -6,7 +6,6 @@ import com.tinkerpop.blueprints.pgm.Vertex;
 import com.tinkerpop.blueprints.pgm.impls.StringFactory;
 import com.tinkerpop.goo.util.GooEdgeSequence;
 import com.tinkerpop.goo.util.GooIdToEdgeSequence;
-import sun.tools.tree.ThisExpression;
 
 import java.util.HashSet;
 import java.util.Set;
