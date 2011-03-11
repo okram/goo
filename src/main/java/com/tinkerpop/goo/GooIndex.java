@@ -3,6 +3,7 @@ package com.tinkerpop.goo;
 import com.tinkerpop.blueprints.pgm.Element;
 import com.tinkerpop.blueprints.pgm.Index;
 import com.tinkerpop.blueprints.pgm.TransactionalGraph;
+import com.tinkerpop.blueprints.pgm.impls.StringFactory;
 import jdbm.PrimaryTreeMap;
 
 import java.util.HashMap;
@@ -53,8 +54,6 @@ public class GooIndex<T extends Element> implements Index<T> {
         objects.add(element);
         this.index.put(key, keyMap);
         this.graph.autoStopTransaction(TransactionalGraph.Conclusion.SUCCESS);
-
-
     }
 
     public Iterable<T> get(final String key, final Object value) {
@@ -98,6 +97,10 @@ public class GooIndex<T extends Element> implements Index<T> {
         }
 
         this.graph.autoStopTransaction(TransactionalGraph.Conclusion.SUCCESS);
+    }
+
+    public String toString() {
+        return StringFactory.indexString(this);
     }
 }
 

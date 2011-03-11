@@ -30,28 +30,27 @@ public class GooGraph implements TransactionalGraph, IndexableGraph {
         try {
             boolean freshGraph;
             this.directory = directory;
-            File file = new File(this.directory);
+            final File file = new File(this.directory);
             if (!file.exists()) {
                 if (!file.mkdir()) {
-                    throw new RuntimeException("Unable to create or load Goo graph directory");
+                    throw new RuntimeException("Unable to create or open Goo graph directory");
                 }
                 freshGraph = true;
             } else {
                 freshGraph = false;
             }
 
-            this.manager = RecordManagerFactory.createRecordManager(this.directory + "/" + GooTokens.GOO);
+            this.manager = RecordManagerFactory.createRecordManager(this.directory + GooTokens.SLASH_GOO);
+
+            // load the persistent tree maps
             this.metadata = this.manager.treeMap(GooTokens.METADATA);
             this.vertices = this.manager.treeMap(GooTokens.VERTICES, new GooElementSerializer<Vertex>(this));
             this.edges = this.manager.treeMap(GooTokens.EDGES, new GooElementSerializer<Edge>(this));
-            this.indices = new HashMap<String, Index<? extends Element>>();
-            this.autoIndices = new HashMap<String, AutomaticIndex<? extends Element>>();
             this.loadIndices();
             if (freshGraph) {
                 this.createAutomaticIndex(Index.VERTICES, GooVertex.class, null);
                 this.createAutomaticIndex(Index.EDGES, GooEdge.class, null);
             }
-
         } catch (IOException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
@@ -68,15 +67,19 @@ public class GooGraph implements TransactionalGraph, IndexableGraph {
     }
 
     private void loadIndices() {
-        Object indexNames = this.metadata.get(GooTokens.INDEX_METADATA);
-        if (null != indexNames) {
-            for (IndexMetadata metadata : (List<IndexMetadata>) indexNames) {
-                if (metadata.getIndexType() == Index.Type.MANUAL) {
-                    this.indices.put(metadata.getIndexName(), new GooIndex(metadata.getIndexName(), metadata.getIndexClass(), this.manager.treeMap(GooTokens.INDEX_PREFIX + metadata.getIndexName()), this));
+        this.indices = new HashMap<String, Index<? extends Element>>();
+        this.autoIndices = new HashMap<String, AutomaticIndex<? extends Element>>();
+
+        final Object metas = this.metadata.get(GooTokens.INDEX_METADATA);
+        if (null != metas) {
+            for (IndexMetadata meta : (List<IndexMetadata>) metas) {
+                final String indexName = meta.getIndexName();
+                if (meta.getIndexType() == Index.Type.MANUAL) {
+                    this.indices.put(indexName, new GooIndex(indexName, meta.getIndexClass(), this.manager.treeMap(GooTokens.INDEX_PREFIX + indexName), this));
                 } else {
-                    AutomaticIndex<? extends Element> temp = new GooAutomaticIndex(metadata.getIndexName(), metadata.getIndexClass(), metadata.getAutoKeys(), this.manager.treeMap(GooTokens.INDEX_PREFIX + metadata.getIndexName()), this);
-                    this.indices.put(metadata.getIndexName(), temp);
-                    this.autoIndices.put(metadata.getIndexName(), temp);
+                    final AutomaticIndex<? extends Element> tempIndex = new GooAutomaticIndex(indexName, meta.getIndexClass(), meta.getAutoKeys(), this.manager.treeMap(GooTokens.INDEX_PREFIX + indexName), this);
+                    this.indices.put(indexName, tempIndex);
+                    this.autoIndices.put(indexName, tempIndex);
                 }
             }
         } else {
@@ -92,7 +95,7 @@ public class GooGraph implements TransactionalGraph, IndexableGraph {
     }
 
     public <T extends Element> Index<T> getIndex(final String indexName, final Class<T> indexClass) {
-        Index<T> index = (Index<T>) this.indices.get(indexName);
+        final Index<T> index = (Index<T>) this.indices.get(indexName);
         if (null == index)
             throw new RuntimeException("No such index exists: " + indexName);
         if (!indexClass.isAssignableFrom(index.getIndexClass()))
@@ -159,123 +162,99 @@ public class GooGraph implements TransactionalGraph, IndexableGraph {
     public Vertex getVertex(final Object id) {
         if (null == id)
             return null;
-        try {
-            final Long longId = Double.valueOf(id.toString()).longValue();
-            return this.vertices.get(longId);
-        } catch (NumberFormatException e) {
-            throw new RuntimeException("Goo vertex ids must be convertible to a long value", e);
-        }
+        final Long longId;
+        if (id instanceof Long)
+            longId = (Long) id;
+        else
+            longId = Double.valueOf(id.toString()).longValue();
+        return this.vertices.get(longId);
     }
 
     public Edge getEdge(final Object id) {
         if (null == id)
             return null;
-        try {
-            final Long longId = Double.valueOf(id.toString()).longValue();
-            return this.edges.get(longId);
-        } catch (NumberFormatException e) {
-            throw new RuntimeException("Goo edge ids must be convertible to a long value", e);
-        }
+
+        final Long longId;
+        if (id instanceof Long)
+            longId = (Long) id;
+        else
+            longId = Double.valueOf(id.toString()).longValue();
+
+        return this.edges.get(longId);
     }
 
-    public Vertex addVertex(Object id) {
-        try {
-            final Long longId = this.vertices.newLongKey();
-            if (this.vertices.containsKey(longId)) {
-                throw new RuntimeException("Vertex with id " + id + " already exists");
-            } else {
-                Vertex vertex = new GooVertex(this, longId);
-                this.vertices.put(longId, vertex);
-                this.autoStopTransaction(TransactionalGraph.Conclusion.SUCCESS);
-                return vertex;
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e.getMessage(), e);
-        }
+    public Vertex addVertex(final Object id) {
+        // provided ids are ignored
+        final Long longId = this.vertices.newLongKey();
+        final Vertex vertex = new GooVertex(this, longId);
+        this.vertices.put(longId, vertex);
+        this.autoStopTransaction(TransactionalGraph.Conclusion.SUCCESS);
+        return vertex;
     }
 
-    public Edge addEdge(Object id, final Vertex outVertex, final Vertex inVertex, final String label) {
-        try {
-            final Long longId = this.edges.newLongKey();
-            if (this.edges.containsKey(longId)) {
-                throw new RuntimeException("Edge with id " + id + " already exists");
-            } else {
-                final Edge edge = new GooEdge(this, longId, outVertex, inVertex, label);
-                ((GooVertex) outVertex).addOutEdges(edge);
-                ((GooVertex) inVertex).addInEdges(edge);
-                this.edges.put(longId, edge);
-                this.vertices.put((Long) outVertex.getId(), outVertex);
-                this.vertices.put((Long) inVertex.getId(), inVertex);
-                this.autoStopTransaction(TransactionalGraph.Conclusion.SUCCESS);
-                return edge;
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e.getMessage(), e);
-        }
+    public Edge addEdge(final Object id, final Vertex outVertex, final Vertex inVertex, final String label) {
+        // provided ids are ignored
+        final Long longId = this.edges.newLongKey();
+        final Edge edge = new GooEdge(this, longId, outVertex, inVertex, label);
+        ((GooVertex) outVertex).addOutEdge(edge);
+        ((GooVertex) inVertex).addInEdge(edge);
+        this.edges.put(longId, edge);
+        this.vertices.put((Long) outVertex.getId(), outVertex);
+        this.vertices.put((Long) inVertex.getId(), inVertex);
+        this.autoStopTransaction(TransactionalGraph.Conclusion.SUCCESS);
+        return edge;
     }
 
     public void removeVertex(final Vertex vertex) {
-        try {
-            for (final Edge edge : vertex.getInEdges()) {
-                this.removeEdge(edge);   // TODO: easy to optimize
-            }
-            for (final Edge edge : vertex.getOutEdges()) {
-                this.removeEdge(edge); // TODO: easy to optimize
-            }
-            this.vertices.remove((Long) vertex.getId());
-
-            AutomaticIndexHelper.removeElement(this, vertex);
-            for (Index index : this.getManualIndices()) {
-                if (Vertex.class.isAssignableFrom(index.getIndexClass())) {
-                    GooIndex<Vertex> idx = (GooIndex<Vertex>) index;
-                    idx.removeElement(vertex);
-                }
-            }
-
-
-            this.autoStopTransaction(TransactionalGraph.Conclusion.SUCCESS);
-        } catch (Exception e) {
-            throw new RuntimeException(e.getMessage(), e);
+        for (final Edge edge : vertex.getInEdges()) {
+            this.removeEdge(edge);
         }
+        for (final Edge edge : vertex.getOutEdges()) {
+            this.removeEdge(edge);
+        }
+        this.vertices.remove((Long) vertex.getId());
+
+        AutomaticIndexHelper.removeElement(this, vertex);
+        // todo make this an IndexHelper method
+        for (final Index index : this.getManualIndices()) {
+            if (Vertex.class.isAssignableFrom(index.getIndexClass())) {
+                GooIndex<Vertex> idx = (GooIndex<Vertex>) index;
+                idx.removeElement(vertex);
+            }
+        }
+
+        this.autoStopTransaction(TransactionalGraph.Conclusion.SUCCESS);
     }
 
     public void removeEdge(final Edge edge) {
-        try {
-            final GooVertex outVertex = (GooVertex) edge.getOutVertex();
-            final GooVertex inVertex = (GooVertex) edge.getInVertex();
-            outVertex.removeOutEdges(edge);
-            inVertex.removeInEdges(edge);
+        final GooVertex outVertex = (GooVertex) edge.getOutVertex();
+        final GooVertex inVertex = (GooVertex) edge.getInVertex();
+        outVertex.removeOutEdge(edge);
+        inVertex.removeInEdge(edge);
 
-
-            AutomaticIndexHelper.removeElement(this, edge);
-            for (Index index : this.getManualIndices()) {
-                if (Edge.class.isAssignableFrom(index.getIndexClass())) {
-                    GooIndex<Edge> idx = (GooIndex<Edge>) index;
-                    idx.removeElement(edge);
-                }
+        AutomaticIndexHelper.removeElement(this, edge);
+        // todo make this an IndexHelper method
+        for (final Index index : this.getManualIndices()) {
+            if (Edge.class.isAssignableFrom(index.getIndexClass())) {
+                GooIndex<Edge> idx = (GooIndex<Edge>) index;
+                idx.removeElement(edge);
             }
-
-            this.edges.remove((Long) edge.getId());
-            this.vertices.put((Long) outVertex.getId(), outVertex);
-            this.vertices.put((Long) inVertex.getId(), inVertex);
-
-            this.autoStopTransaction(TransactionalGraph.Conclusion.SUCCESS);
-        } catch (Exception e) {
-            throw new RuntimeException(e.getMessage(), e);
         }
+
+        this.edges.remove((Long) edge.getId());
+        this.vertices.put((Long) outVertex.getId(), outVertex);
+        this.vertices.put((Long) inVertex.getId(), inVertex);
+
+        this.autoStopTransaction(TransactionalGraph.Conclusion.SUCCESS);
     }
 
     public void clear() {
-        try {
-            this.vertices.clear();
-            this.edges.clear();
-            this.indices.clear();
-            this.autoIndices.clear();
-            this.metadata.put(GooTokens.INDEX_METADATA, new ArrayList<IndexMetadata>());
-            this.autoStopTransaction(TransactionalGraph.Conclusion.SUCCESS);
-        } catch (Exception e) {
-            throw new RuntimeException(e.getMessage(), e);
-        }
+        this.vertices.clear();
+        this.edges.clear();
+        this.indices.clear();
+        this.autoIndices.clear();
+        this.metadata.put(GooTokens.INDEX_METADATA, new ArrayList<IndexMetadata>());
+        this.autoStopTransaction(TransactionalGraph.Conclusion.SUCCESS);
     }
 
     public void shutdown() {

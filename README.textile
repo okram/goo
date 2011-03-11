@@ -1,1 +1,9 @@
-h2. Goo: A Drippy Graph Database
+h2. Goo: A Graph Database
+
+Goo is an embedded, "ACID":http://en.wikipedia.org/wiki/ACID based "graph database":http://en.wikipedia.org/wiki/Graph_database written in Java.
+
+* The native graph API is "Blueprints":http://blueprints.tinkerpop.com
+* The traversal engine is "Pipes":http://pipes.tinkerpop.com
+* The traversal "DSL":http://en.wikipedia.org/wiki/Domain-specific_language is "Gremlin":http://gremlin.tinkerpop.com
+* The object-to-graph mapper is "Frames":http://frames.tinkerpop.com
+* The REST engine is "Rexster":http://rexster.tinkerpop.com

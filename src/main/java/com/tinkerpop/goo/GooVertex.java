@@ -25,28 +25,28 @@ public class GooVertex extends GooElement implements Vertex {
         super(graph, id);
     }
 
-    protected void addOutEdges(final Edge edge) {
+    protected void addOutEdge(final Edge edge) {
         this.outEdgesById.add((Long) edge.getId());
         if (null != this.outEdges) {
             this.outEdges.add(edge);
         }
     }
 
-    protected void addInEdges(Edge edge) {
+    protected void addInEdge(Edge edge) {
         this.inEdgesById.add((Long) edge.getId());
         if (null != this.inEdges) {
             this.inEdges.add(edge);
         }
     }
 
-    protected void removeOutEdges(final Edge edge) {
+    protected void removeOutEdge(final Edge edge) {
         this.outEdgesById.remove((Long) edge.getId());
         if (null != this.outEdges) {
             this.outEdges.remove(edge);
         }
     }
 
-    protected void removeInEdges(Edge edge) {
+    protected void removeInEdge(Edge edge) {
         this.inEdgesById.remove((Long) edge.getId());
         if (null != this.inEdges) {
             this.inEdges.remove(edge);

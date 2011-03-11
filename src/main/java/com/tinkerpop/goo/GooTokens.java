@@ -6,6 +6,7 @@ package com.tinkerpop.goo;
 public class GooTokens {
 
     public static final String GOO = "goo";
+    public static final String SLASH_GOO = "/goo";
     public static final String VERTICES = "vertices";
     public static final String EDGES = "edges";
     public static final String METADATA = "metadata";
