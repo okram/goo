@@ -20,7 +20,7 @@ public class GooGraph implements TransactionalGraph, IndexableGraph {
     protected final RecordManager manager;
     private final PrimaryTreeMap<String, Object> metadata;
     private final PrimaryTreeMap<Long, Vertex> vertices;
-    private final PrimaryTreeMap<Long, Edge> edges;
+    private PrimaryTreeMap<Long, Edge> edges;
     private Map<String, Index<? extends Element>> indices;
     private Map<String, AutomaticIndex<? extends Element>> autoIndices;
     private Mode mode = Mode.AUTOMATIC;
@@ -152,6 +152,12 @@ public class GooGraph implements TransactionalGraph, IndexableGraph {
     }
 
     public Iterable<Edge> getEdges() {
+        /* try {
+            this.edges.values().iterator();
+        } catch (Exception e) {
+            this.edges = this.manager.treeMap(GooTokens.EDGES, new GooElementSerializer<Edge>(this));
+        }
+        */
         return this.edges.values();
     }
 
