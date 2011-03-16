@@ -14,11 +14,16 @@ public class GooEdge extends GooElement implements Edge {
     private final Long inVertexId;
     private final Long outVertexId;
 
+    private transient Vertex outVertex;
+    private transient Vertex inVertex;
+
     protected GooEdge(final GooGraph graph, final Long id, final Vertex outVertex, final Vertex inVertex, final String label) {
         super(graph, id);
         this.label = label;
         this.outVertexId = (Long) outVertex.getId();
         this.inVertexId = (Long) inVertex.getId();
+        this.outVertex = outVertex;
+        this.inVertex = inVertex;
         for (AutomaticIndex index : this.graph.getAutoIndices()) {
             ((GooAutomaticIndex) index).autoUpdate(AutomaticIndex.LABEL, this.label, null, this);
         }
@@ -29,11 +34,15 @@ public class GooEdge extends GooElement implements Edge {
     }
 
     public Vertex getOutVertex() {
-        return this.graph.getVertex(outVertexId);
+        if (null == this.outVertex)
+            this.outVertex = this.graph.getVertex(this.outVertexId);
+        return this.outVertex;
     }
 
     public Vertex getInVertex() {
-        return this.graph.getVertex(inVertexId);
+        if (null == this.inVertex)
+            this.inVertex = this.graph.getVertex(this.inVertexId);
+        return this.inVertex;
     }
 
     public String toString() {

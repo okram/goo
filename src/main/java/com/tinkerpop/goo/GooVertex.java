@@ -18,7 +18,7 @@ public class GooVertex extends GooElement implements Vertex {
     protected transient Set<Edge> outEdges;
     protected transient Set<Edge> inEdges;
 
-    protected Set<Long> outEdgesById = new HashSet<Long>();
+    protected Set<Long> outEdgesById = new HashSet<Long>(); // todo: make list for efficiency
     protected Set<Long> inEdgesById = new HashSet<Long>();
 
     public GooVertex(final GooGraph graph, final Long id) {
